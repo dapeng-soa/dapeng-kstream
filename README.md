@@ -18,7 +18,7 @@
 我们以以下几个需求来看如果使用这套Api: 
 
 * 1.线上的堆栈异常要及时通过钉钉通知开发人员,同时发送错误邮件。
-    ```
+    ```java
     topic("test")
     .dapengFilter((_,v) => v.contains("ERROR") || v.contains("Exception"))
     .sendMail("bbliang@today36524.com.cn", "订单异常")
@@ -29,7 +29,7 @@
     
 * 2.某jvm进程一分钟内FullGc次数超过2次告警。
 
-    ```
+    ```java
     topic("test")
     .serviceFilter("orderService")
     .dapengFilter((_,v) => v.contains("FullGc"))
@@ -42,8 +42,8 @@
     第三个参数(count) 是: 告警阈值, 达到该次数则告警(默认发邮件, 也可以像1一样定制发钉钉，邮件)
     
 * 3.单个订单总金额超过10w或者子单个数超过1k的告警, 需业务埋点去提取关键信息
-    ```
-    如： 业务埋点： logger.info(s"@@@:  createOrder orderNo: ${order.orderNo} totalAmount: ${order.orderActualAmount}, orderDetailSize: ${request.orderDetails.size}")
+    ```java
+    //如： 业务埋点： logger.info(s"@@@:  createOrder orderNo: ${order.orderNo} totalAmount: ${order.orderActualAmount}, orderDetailSize: ${request.orderDetails.size}")
     
     val matcher = "@@@: (createOrder orderNo: )(\\w+)(, totalAmount: )(-?\\d+.?\\d*)(, orderDetailSize: )(\\d+)".r
     
@@ -59,8 +59,8 @@
     .sendMail("bbliang@today36524.com.cn", "订单异常")
     ```
 * 4.在凌晨6点到第二天凌晨2点， 一分钟内没有订单产生的话告警
-    ```
-    # 4.  在凌晨6点到第二天凌晨2点， 一分钟内没有订单产生的话告警
+    ```java
+    // 4.  在凌晨6点到第二天凌晨2点， 一分钟内没有订单产生的话告警
     topic("test")
     .serviceFilter("orderService")
     .dapengFilter((_,v) => v.contains("createOrder"))
@@ -75,32 +75,32 @@
     第五个参数(count) 是: 告警阈值, 达到该次数则告警(默认发邮件, 也可以像1一样定制发钉钉，邮件)
 
 ### 4. 提供的接口:
-```
-# 自定义消息过滤条件，true: 继续往下执行，false: 丢弃
+```java
+// 自定义消息过滤条件，true: 继续往下执行，false: 丢弃
 def dapengFilter(p: (K,V) ⇒ Boolean):DapengKStream[K,V]
 
-# 根据serviceTag 过滤消息
+// 根据serviceTag 过滤消息
 serviceFilter(serviceName: String)
 
-# 根据日志级别过滤消息
+// 根据日志级别过滤消息
 logLevelFilter(logLevel: String)
 
-# 自定义消息转换，用于日志消息转换处理
+// 自定义消息转换，用于日志消息转换处理
 dapengMap[KR, VR](mapper: (K, V) => (KR, VR))
 
-# 用于时间段统计的需求, 如前面的需求2
+// 用于时间段统计的需求, 如前面的需求2
 def clockCountToWarn(duration: Duration, keyWord: String, countTimesToWarn: Int)
 
-# 用于有特殊时间段统计的需求,  如需求4
+// 用于有特殊时间段统计的需求,  如需求4
 def clockToClockCountToWarn(timeFrom: Int, timeTo: Int, duration: Duration, keyWord: String, countTimesToWarn: Int)
 
-# 发送钉钉消息
+// 发送钉钉消息
 def sendDingding(user: String)
 
-# 发送邮件
+// 发送邮件
 def sendMail(user: String, subJect: String)
 
-# Kstream原生Api也是可以无缝支持的，如果有Kafka Kstream基础的同学可以使用原生Api
+// Kstream原生Api也是可以无缝支持的，如果有Kafka Kstream基础的同学可以使用原生Api
 ```
 
 ### 5. DapengKstream实现主要逻辑
