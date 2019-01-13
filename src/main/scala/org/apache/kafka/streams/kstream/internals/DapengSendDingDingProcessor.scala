@@ -9,7 +9,6 @@ class DapengSendDingDingProcessor[K,V](user: String, sendDingDingFunc: (String, 
   private class SendDingDingProcessor extends AbstractProcessor[K,V] {
 
     override def process(key: K, value: V): Unit = {
-      println(s"sending dingding to ${user}, msg: ${value}")
       //TODO: sendDingDing(user, msg)
       sendDingDingFunc(user, value)
       context().forward(key, value)

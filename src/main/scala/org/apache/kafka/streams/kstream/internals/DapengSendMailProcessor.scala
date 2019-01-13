@@ -9,7 +9,6 @@ class DapengSendMailProcessor[K,V](user: String, subJect: String, sendMailFunc: 
   private class SendMailProcessor extends AbstractProcessor[K,V] {
 
     override def process(key: K, value: V): Unit = {
-      println(s"sending email to ${user}, msg: ${value}")
       sendMailFunc(user,subJect,value)
       //TODO: sendEmail(user)
       context().forward(key, value)

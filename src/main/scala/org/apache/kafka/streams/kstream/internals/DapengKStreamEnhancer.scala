@@ -3,25 +3,29 @@ package org.apache.kafka.streams.kstream.internals
 import java.time.Duration
 
 import com.dapeng.kstream.DapengKStream
-import org.apache.kafka.streams.kstream.internals.graph.{ProcessorGraphNode, ProcessorParameters}
+import org.apache.kafka.streams.kstream.internals.graph.{ProcessorGraphNode, ProcessorParameters, StatefulProcessorNode}
 import org.apache.kafka.streams.processor.ProcessorSupplier
+import org.apache.kafka.streams.scala.Serdes
 import org.apache.kafka.streams.scala.kstream.KStream
+import org.apache.kafka.streams.state.Stores
 
 object DapengKStreamEnhancer {
-
-  def main(args: Array[String]): Unit = {
-    val lis = List(1,2,3)
-    println(lis.filter(_ > 1))
-  }
 
   implicit class KStreamImplEnhancer[K,V](kstream: KStream[K,V]) {
 
     def clockCountToWarn(duration: Duration, keyWord: String, countTimesToWarn: Int) = {
-      toKstream(new DapengClockProcessor[K,V](duration, keyWord,countTimesToWarn),"KSTREAM-CLOCK-COUNT-TO-WARN-", false)
+      toStatefulKStream(new DapengClockProcessor[K,V](duration, keyWord,countTimesToWarn, s"CLOCK-${keyWord}"),
+        "KSTREAM-CLOCK-COUNT-TO-WARN-",
+        false,
+        s"CLOCK-${keyWord}")
     }
 
     def clockToClockCountToWarn(timeFrom: Int, timeTo: Int, duration: Duration, keyWord: String, countTimesToWarn: Int) = {
-      toKstream(new DapengClockToClockProcessor[K,V](timeFrom,timeTo,duration, keyWord,countTimesToWarn),"KSTREAM-CLOCK-TO-CLOCK-COUNT-TO-WARN-", false)
+      toStatefulKStream(
+        new DapengClockToClockProcessor[K,V](timeFrom,timeTo,duration, keyWord,countTimesToWarn, s"CLOCK-TO-CLOCK-${keyWord}"),
+        "KSTREAM-CLOCK-TO-CLOCK-COUNT-TO-WARN-",
+        false,
+        s"CLOCK-TO-CLOCK-${keyWord}")
     }
 
     def toDapengKStream() = {
@@ -39,17 +43,12 @@ object DapengKStreamEnhancer {
     }
 
     private def sendDingDing(user: String, msg: V) = {
-
     }
 
     //TODO: zhupeng 提供
     private def sendMailPrivate(user: String, subJect: String, msg: V) = {
 
     }
-
-//    def doAction(f: String => String) = {
-//      toKstream(new DapengDoActionProcessor[K,V](f), "KSTREAM-DOACTION-", false)
-//    }
 
     private def toKstream(processor: ProcessorSupplier[K,V], name: String, needRepartition: Boolean) = {
       val innerKstreamImpl: KStreamImpl[K, V] = kstream.inner.asInstanceOf[KStreamImpl[K,V]]
@@ -59,17 +58,43 @@ object DapengKStreamEnhancer {
       val processorParameters = new ProcessorParameters[K,V](processor,pName)
 
       val processorNode = new ProcessorGraphNode(pName, processorParameters, needRepartition)
+
       builder.addGraphNode(parentGraphNode, processorNode)
 
       val kstreamJ = new KStreamImpl[K,V](pName,
         innerKstreamImpl.keySerde,
         innerKstreamImpl.valueSerde(),
         innerKstreamImpl.sourceNodes,
-        true,
+        needRepartition,
         processorNode,
         builder)
 
       new KStream[K,V](kstreamJ)
+    }
+
+    private def toStatefulKStream(processor: ProcessorSupplier[K,V], name: String, needRepartition: Boolean, storeName: String) = {
+      val innerKstreamImpl: KStreamImpl[K, V] = kstream.inner.asInstanceOf[KStreamImpl[K,V]]
+      val builder = innerKstreamImpl.builder
+      val parentGraphNode = innerKstreamImpl.streamsGraphNode
+      val pName = builder.newProcessorName(name)
+      val processorParameters = new ProcessorParameters[K,V](processor,pName)
+
+      val storeBuilder = Stores.keyValueStoreBuilder( Stores.persistentKeyValueStore(storeName), Serdes.String, Serdes.Long)
+
+      val statefulProcessorNode = new StatefulProcessorNode(pName, processorParameters, storeBuilder, needRepartition)
+
+      builder.addGraphNode(parentGraphNode, statefulProcessorNode)
+
+      val kstreamJ = new KStreamImpl[K,V](pName,
+        innerKstreamImpl.keySerde,
+        innerKstreamImpl.valueSerde(),
+        innerKstreamImpl.sourceNodes,
+        needRepartition,
+        statefulProcessorNode,
+        builder)
+
+      new KStream[K,V](kstreamJ)
+
     }
   }
 
