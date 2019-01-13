@@ -2,11 +2,14 @@ package org.apache.kafka.streams.kstream.internals
 
 import java.time.Duration
 
+import com.dapeng.kstream.util.mail.MailUtils
 import kafka.utils.Logging
 import org.apache.kafka.streams.processor._
 import org.apache.kafka.streams.state.KeyValueStore
 
-class DapengClockProcessor[K,V](duration: Duration, keyWord: String, countTimesToWarn: Int, storeName: String)
+class DapengClockProcessor[K,V](duration: Duration, keyWord: String,
+                                countTimesToWarn: Int, storeName: String,
+                                userTag: String, subject: String)
   extends ProcessorSupplier[K,V] with Logging{
 
   var kvStore: KeyValueStore[String, Long] = null;
@@ -23,6 +26,11 @@ class DapengClockProcessor[K,V](duration: Duration, keyWord: String, countTimesT
             val counter: Long = kvStore.get(keyWord)
             if (counter != null && counter > countTimesToWarn) {
               //TODO: sendMail
+              val mailContent =
+                s"""
+                  ${duration.toMinutes} 分钟内， ${keyWord} 出现的次数超过预期, 预期 < ${countTimesToWarn}, 当前: ${counter}
+                """
+              MailUtils.sendEmail(userTag, subject, mailContent)
               info(s" ClockProcessor start to send warning mail...${i.key}, ${i.value}")
             }
             kvStore.delete(keyWord)

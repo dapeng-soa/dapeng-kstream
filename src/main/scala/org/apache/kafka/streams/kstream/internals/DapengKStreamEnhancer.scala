@@ -13,7 +13,7 @@ object DapengKStreamEnhancer {
 
   implicit class KStreamImplEnhancer[K,V](kstream: KStream[K,V]) {
 
-    def clockCountToWarn(duration: Duration, keyWord: String, countTimesToWarn: Int) = {
+    def clockCountToWarn(duration: Duration, keyWord: String, countTimesToWarn: Int, userTag: String, subject: String) = {
       toStatefulKStream(new DapengClockProcessor[K,V](duration, keyWord,countTimesToWarn, s"CLOCK-${keyWord}"),
         "KSTREAM-CLOCK-COUNT-TO-WARN-",
         false,
