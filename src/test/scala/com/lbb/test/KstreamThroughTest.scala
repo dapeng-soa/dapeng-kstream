@@ -17,12 +17,15 @@ object KstreamThroughTest {
     import builder._
       topic("test")
         .dapengFilter((_,v) => v.contains("ERROR") || v.contains("Exception"))
-        .dapengMap((k,v) => (k, s"订单异常，请注意: $v") )
+        .dapengMap((k,v) => {
+          println(s" received msg: ${v}")
+          (k, s"订单异常，请注意: $v") })
         .clockCountToWarn(Duration.ofMinutes(1), "ERROR",
-          2, "orderService", "[订单错误统计告警]")
+          2,"all",
+          "orderService", "[订单错误统计告警]")
         .clockToClockCountToWarn(3,4, Duration.ofMinutes(1), "ERROR", 2)
-        .sendMail("bbliang@today36524.com.cn", "订单异常")
-        .sendDingding("18588733858")
+//        .sendMail("bbliang@today36524.com.cn", "订单异常")
+//        .sendDingding("18588733858")
 
     start("172.18.110.145:9092", "latest")
 
