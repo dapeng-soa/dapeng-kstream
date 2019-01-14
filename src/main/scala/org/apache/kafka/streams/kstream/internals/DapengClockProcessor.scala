@@ -2,13 +2,13 @@ package org.apache.kafka.streams.kstream.internals
 
 import java.time.Duration
 
-import com.dapeng.kstream.util.mail.MailUtils
 import kafka.utils.Logging
 import org.apache.kafka.streams.processor._
 import org.apache.kafka.streams.state.KeyValueStore
 
 class DapengClockProcessor[K,V](duration: Duration, keyWord: String,
                                 countTimesToWarn: Int, storeName: String,
+                                warningType: String,
                                 userTag: String, subject: String)
   extends ProcessorSupplier[K,V] with Logging{
 
@@ -20,17 +20,14 @@ class DapengClockProcessor[K,V](duration: Duration, keyWord: String,
     override def init(processorContext: ProcessorContext): Unit = {
       super.init(processorContext)
       kvStore = processorContext.getStateStore(storeName).asInstanceOf[KeyValueStore[String,Long]]
+      println(" clock processor initialized.....")
       processorContext.schedule(duration, PunctuationType.WALL_CLOCK_TIME, (i) => {
         if (kvStore.all().hasNext) {
           kvStore.all().forEachRemaining(i => {
             val counter: Long = kvStore.get(keyWord)
             if (counter != null && counter > countTimesToWarn) {
               //TODO: sendMail
-              val mailContent =
-                s"""
-                  ${duration.toMinutes} 分钟内， ${keyWord} 出现的次数超过预期, 预期 < ${countTimesToWarn}, 当前: ${counter}
-                """
-              MailUtils.sendEmail(userTag, subject, mailContent)
+              sendWarning(warningType,userTag, subject, counter )
               info(s" ClockProcessor start to send warning mail...${i.key}, ${i.value}")
             }
             kvStore.delete(keyWord)
@@ -54,6 +51,22 @@ class DapengClockProcessor[K,V](duration: Duration, keyWord: String,
           } else {
             kvStore.put(keyWord, 1)
           }
+      }
+    }
+
+    private def sendWarning(warningType: String, userTag: String, subject: String, counter: Long) = {
+      import com.dapeng.kstream.util.DapengWarningUtil._
+      val warningContent =
+        s"""
+          ${duration.toMinutes} 分钟内， ${keyWord} 出现的次数超过预期, 预期 < ${countTimesToWarn}, 当前: ${counter}
+        """
+      warningType match {
+        case "mail" => sendMailPrivate(userTag, subject, warningContent)
+        case "dingding" => sendDingDing(userTag, warningContent)
+        case "all" =>
+          sendMailPrivate(userTag, subject, warningContent)
+          sendDingDing(userTag, warningContent)
+        case _ => throw new Exception(s"错误的告警类型: ${warningType}")
       }
     }
   }
