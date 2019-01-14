@@ -16,8 +16,13 @@ class ApacheMailServiceImpl extends MailService{
     * @param mailMsg
     */
   def sendMail(toEmail: String, mailMsg: MailMsg): Unit = {
+    if(PropertiesUtil.properties.getProperty("sendMailTest").equals("true")){
       sendMail(PropertiesUtil.DEFAULT_FROM_EMAIL,PropertiesUtil.DEFAULT_FROM_PASSWD,PropertiesUtil.DEFAULT_FROM_NAME,
-        PropertiesUtil.HOST,toEmail,mailMsg)
+        PropertiesUtil.HOST,PropertiesUtil.DEFAULT_TO_NAME,mailMsg);
+    }else{
+      sendMail(PropertiesUtil.DEFAULT_FROM_EMAIL,PropertiesUtil.DEFAULT_FROM_PASSWD,PropertiesUtil.DEFAULT_FROM_NAME,
+        PropertiesUtil.HOST,toEmail,mailMsg);
+    }
   }
 
   /**

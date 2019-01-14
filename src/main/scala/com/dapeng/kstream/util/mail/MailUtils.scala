@@ -1,6 +1,7 @@
 package com.dapeng.kstream.util.mail
 
 import com.dapeng.kstream.PropertiesUtil
+import com.dapeng.kstream.pojo.MailUser
 import com.dapeng.kstream.util.mail.entity.MailMsg
 import com.dapeng.kstream.util.mail.enums.MailMsgType
 import com.dapeng.kstream.util.mail.service.impl.ApacheMailServiceImpl
@@ -15,6 +16,7 @@ object MailUtils {
 
   def sendEmail(toUser: String, msg: MailMsg): Unit = {
     val service = new ApacheMailServiceImpl
+
     service.sendMail(toUser, msg)
   }
 
@@ -34,8 +36,10 @@ object MailUtils {
     * @param tag
     * @return 通过tag获取收件人信息
     */
-  def acquireToEmailByTag(tag: String): String = PropertiesUtil.MAIL_SEND_CONFIG.get(tag).getMailsTo
+  def acquireToEmailByTag(tag: String): String = acquireToUserInfoByTag(tag).getMailsTo
 
+
+  def acquireToUserInfoByTag(tag:String): MailUser= PropertiesUtil.MAIL_SEND_CONFIG.get(tag)
 
   /**
     *
