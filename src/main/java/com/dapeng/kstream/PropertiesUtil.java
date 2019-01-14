@@ -1,7 +1,7 @@
 package com.dapeng.kstream;
 
 import com.dapeng.kstream.pojo.MailUser;
-import com.sun.deploy.util.StringUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;

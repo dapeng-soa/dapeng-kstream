@@ -19,5 +19,6 @@ libraryDependencies ++= Seq(
   "com.google.guava" % "guava" % "16.0.1",
   "org.apache.commons" % "commons-email" % "1.5",
   "apache-httpclient" % "commons-httpclient" % "3.1",
-  "com.google.code.gson" % "gson" % "2.8.2"
+  "com.google.code.gson" % "gson" % "2.8.2",
+  "commons-lang" % "commons-lang" % "2.6"
 )
