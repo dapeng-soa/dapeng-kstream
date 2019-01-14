@@ -23,7 +23,13 @@ object KstreamThroughTest {
         .clockCountToWarn(Duration.ofMinutes(1), "ERROR",
           2,"all",
           "orderService", "[订单错误统计告警]")
-        .clockToClockCountToWarn(3,4, Duration.ofMinutes(1), "ERROR", 2)
+        .clockToClockCountToWarn(2,
+            6,
+            Duration.ofMinutes(1), "ERROR",
+            2,
+            "all",
+            "orderService",
+            "[订单错误统计告警]")
 //        .sendMail("bbliang@today36524.com.cn", "订单异常")
 //        .sendDingding("18588733858")
 
