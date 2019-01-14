@@ -4,11 +4,12 @@ import java.io.{BufferedReader, IOException, InputStreamReader, UnsupportedEncod
 import java.net.URLEncoder
 import java.util
 import java.util.{Map, Set}
+
 import com.google.gson.Gson
-
-
 import org.apache.commons.httpclient.{HttpClient, HttpException, HttpStatus, MultiThreadedHttpConnectionManager}
 import org.apache.commons.httpclient.methods.{GetMethod, PostMethod, RequestEntity, StringRequestEntity}
+
+import scala.io.Source
 
 /**
   * @Author: zhup
@@ -154,13 +155,9 @@ object HttpUtils {
       val statusCode = client.executeMethod(postMethod)
       if (statusCode == HttpStatus.SC_OK || statusCode == HttpStatus.SC_CREATED || statusCode == HttpStatus.SC_BAD_REQUEST) { //response = postMethod.getResponseBodyAsString();
         //response = postMethod.getResponseBodyAsStream().toString();
-        val reader = new BufferedReader(new InputStreamReader(postMethod.getResponseBodyAsStream))
-        val stringBuffer = new StringBuffer
-        var str = ""
-        while ( {
-          (str = reader.readLine) != null
-        }) stringBuffer.append(str)
-        response = stringBuffer.toString
+       // val reader = new BufferedReader()
+        val result = Source.fromInputStream(postMethod.getResponseBodyAsStream)
+        result.getLines()
         //System.out.println(response);
       }
       else System.out.println("响应状态码 = " + postMethod.getStatusCode)
