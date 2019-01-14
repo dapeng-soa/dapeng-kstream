@@ -10,7 +10,7 @@ dapeng-kstream开发的初衷，由于kafka-kstream有一定的学习成本，�
 > 前期在部署中心页面功能未完善之前，暂时需要运维帮忙手动操作一下，后续页面操作功能完善后，业务部门就只需要关心自己的告警逻辑。
 
 1. 用户自定义告警逻辑保存为文件并上传到服务器指定目录(如 `/opt/kstream/orderWarning.txt`) (**后面会说到具体如何定义自己的告警逻辑**)
-2. 调用DapengKStream引擎 => `java -jar dapengKstream.jar -Dname=orderWarning /opt/kstream/orderWarning.txt `
+2. 调用DapengKStream引擎 => `java -jar dapengKstream.jar -Dname=orderWarning /opt/kstream/orderWarning.sc `
 
 ### 2. Dapeng-kstream 提供的拓展接口:
 ```java
