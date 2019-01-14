@@ -3,7 +3,7 @@ package org.apache.kafka.streams.kstream.internals
 import java.time.Duration
 
 import com.dapeng.kstream.DapengKStream
-import com.dapeng.kstream.util.dingding.DispatherDDUtils
+import com.dapeng.kstream.util.dingding.DispatcherDDUtils
 import com.dapeng.kstream.util.mail.MailUtils
 import org.apache.kafka.streams.kstream.internals.graph.{ProcessorGraphNode, ProcessorParameters, StatefulProcessorNode}
 import org.apache.kafka.streams.processor.ProcessorSupplier
@@ -46,7 +46,7 @@ object DapengKStreamEnhancer {
 
     private def sendDingDing(tag: String, msg: V) = {
       val mailUser = MailUtils.acquireToUserInfoByTag(tag)
-      DispatherDDUtils.sendMessageToDD(mailUser.getPhones,MailUtils.acquireSubjectByTag(tag),msg.toString)
+      DispatcherDDUtils.sendMessageToDD(mailUser.getPhones,MailUtils.acquireSubjectByTag(tag),msg.toString)
     }
 
     //TODO: zhupeng 提供
