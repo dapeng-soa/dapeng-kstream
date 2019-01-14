@@ -3,6 +3,8 @@ package org.apache.kafka.streams.kstream.internals
 import java.time.Duration
 
 import com.dapeng.kstream.DapengKStream
+import com.dapeng.kstream.util.dingding.DispatherDDUtils
+import com.dapeng.kstream.util.mail.MailUtils
 import org.apache.kafka.streams.kstream.internals.graph.{ProcessorGraphNode, ProcessorParameters, StatefulProcessorNode}
 import org.apache.kafka.streams.processor.ProcessorSupplier
 import org.apache.kafka.streams.scala.Serdes
@@ -42,12 +44,14 @@ object DapengKStreamEnhancer {
       toKstream(new DapengSendMailProcessor[K,V](user, subJect, sendMailFunc),"KSTREAM-SEND-MAIL-", false)
     }
 
-    private def sendDingDing(user: String, msg: V) = {
+    private def sendDingDing(tag: String, msg: V) = {
+      val mailUser = MailUtils.acquireToUserInfoByTag(tag)
+      DispatherDDUtils.sendMessageToDD(mailUser.getPhones,MailUtils.acquireSubjectByTag(tag),msg.toString)
     }
 
     //TODO: zhupeng 提供
-    private def sendMailPrivate(user: String, subJect: String, msg: V) = {
-
+    private def sendMailPrivate(tag: String, subJect: String, msg: V) = {
+      MailUtils.sendEmail(MailUtils.acquireToUserInfoByTag(tag).mailsTo,subJect,msg.toString)
     }
 
     private def toKstream(processor: ProcessorSupplier[K,V], name: String, needRepartition: Boolean) = {
