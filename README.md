@@ -112,8 +112,8 @@ def sendMail(user: String, subject: String)
     ```java
     topic("order_topic")
     .dapengFilter((_,v) => v.contains("ERROR") || v.contains("Exception"))
-    .sendMail("orderService", "订单错误异常告警")
-    .sendDingding(("orderService")
+    .sendMail("orderGroup", "订单错误异常告警")
+    .sendDingding(("orderGrooup")
 
     ```
     > 上面的意思是： 订阅对应的消息主题，过滤消息包含错误或异常的消息，然后发邮件，钉钉
@@ -128,7 +128,7 @@ def sendMail(user: String, subject: String)
             "ERROR",
              2,
             "all", //（all： 包含发邮件，钉钉告警, 详见2的APi接口参数）
-            "orderService", 
+            "orderGroup", 
             "[订单错误统计告警]")
     ```
     >上面的意思是：订阅对应的消息主题，根据serviceTag：`orderService` 过滤订单的消息，根据消息内容:`FullGc`过滤后，每隔1分钟统计该消息，如果次数等于或超过2次后，发送 邮件,钉钉告警，同时主题是: "[订单错误统计告警]", 内容为原消息， 如果需要针对消息做进一步加工转换的话，可以在dapengFilter后 接一个dapengMap的函数, 如:
@@ -141,7 +141,7 @@ def sendMail(user: String, subject: String)
             "ERROR",
              2,
             "all", //（all： 包含发邮件，钉钉告警, 详见2的APi接口参数）
-            "orderService", 
+            "orderGroup", 
             "[订单错误统计告警]")
     ```
 
@@ -178,7 +178,7 @@ def sendMail(user: String, subject: String)
             "createOrder",
             0,
             "all",
-            "orderService", 
+            "orderGroup", 
             "[一分钟内没有订单创建，请查看]")
     ```
 
