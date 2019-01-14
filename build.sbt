@@ -1,3 +1,4 @@
+import java.io.{FileInputStream, FileOutputStream}
 
 organization := "com.github.dapeng-soa"
 name := "dapeng-kstream"
@@ -22,3 +23,34 @@ libraryDependencies ++= Seq(
   "com.google.code.gson" % "gson" % "2.8.2",
   "commons-lang" % "commons-lang" % "2.6"
 )
+
+mainClass in assembly := Some("com.dapeng.kstream.Main")
+
+lazy val dist = taskKey[File]("make a dist scompose file")
+
+dist := {
+  val assemblyJar = assembly.value
+
+  val distJar = new java.io.File(target.value, "dapengKStream")
+  val out = new FileOutputStream(distJar)
+
+  out.write(
+    """#!/usr/bin/env sh
+      |exec java -jar -XX:+UseG1GC "$0" "$@"
+      |""".stripMargin.getBytes)
+
+  val inStream = new FileInputStream(assemblyJar)
+  val buffer = new Array[Byte](1024)
+
+  while( inStream.available() > 0) {
+    val length = inStream.read(buffer)
+    out.write(buffer, 0, length)
+  }
+
+  out.close
+
+  distJar.setExecutable(true, false)
+  println(s"build dapengKStream at ${distJar.getAbsolutePath}" )
+
+  distJar
+}

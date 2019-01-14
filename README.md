@@ -16,8 +16,8 @@ dapeng-kstream开发的初衷，由于kafka-kstream有一定的学习成本，�
 ```java
 /**
 * 提供一个返回布尔值的函数: true: 下一个节点继续处理该消息，false: 丢弃
-* k: kafka流式消息的key
-* v: kafka流式消息的value， 一般value即为: 业务接收的消息
+* k: kafka流式消息的key, 生产者发送消息时指定的key 默认为null， 可以通过dapengMap, clockToWarn函数转换为其他值
+* v: kafka流式消息的value， value一般为业务接收的原始消息， 可以通过dapengMap,clockToWarn函数转换值
 * @param p the provided func
 * @return DapengKStream[K,V]
 */
@@ -39,7 +39,7 @@ def serviceFilter(serviceName: String):DapengKStream[K,V]
 def logLevelFilter(logLevel: String)
 
 /**
-* 提供一个Key, Value转换的函数，该方法可以对消息的Key, Value 进行转换处理
+* 提供一个Key, Value转换的函数，该方法可以对消息的Key, Value 进行转换处理, 默认的key为Null
 * @param mapper the function to input
 * @tparam KR new transformed Key value
 * @tparam VR new transformed Value
