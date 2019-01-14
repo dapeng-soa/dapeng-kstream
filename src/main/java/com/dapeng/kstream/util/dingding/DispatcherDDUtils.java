@@ -12,7 +12,7 @@ import java.util.*;
  * @author huyj
  * @Created 2018-07-24 12:51
  */
-public class DispatherDDUtils {
+public class DispatcherDDUtils {
 
 
     public static boolean sendMessageToDD(Set<String> atPeoples, Map markDownMap) {
