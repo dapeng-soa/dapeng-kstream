@@ -10,13 +10,24 @@ import org.apache.kafka.streams.processor.ProcessorSupplier
 import org.apache.kafka.streams.scala.Serdes
 import org.apache.kafka.streams.scala.kstream.KStream
 import org.apache.kafka.streams.state.Stores
+import com.dapeng.kstream.util.DapengWarningUtil._
 
 object DapengKStreamEnhancer {
 
   implicit class KStreamImplEnhancer[K,V](kstream: KStream[K,V]) {
 
-    def clockCountToWarn(duration: Duration, keyWord: String, countTimesToWarn: Int, userTag: String, subject: String) = {
-      toStatefulKStream(new DapengClockProcessor[K,V](duration, keyWord,countTimesToWarn, s"CLOCK-${keyWord}", userTag, subject),
+    /**
+      *
+      * @param duration 定时任务触发间隔
+      * @param keyWord 统计的关键字
+      * @param countTimesToWarn 告警阈值
+      * @param warningType 发送告警类型: "mail": 发邮件, "dingding": 发钉钉, "all", 同时发邮件跟钉钉
+      * @param userTag  根据ServiceTag 获取发送的用户
+      * @param subject  邮件 或 钉钉的主题
+      * @return
+      */
+    def clockCountToWarn(duration: Duration, keyWord: String, countTimesToWarn: Int, warningType:String, userTag: String, subject: String) = {
+      toStatefulKStream(new DapengClockProcessor[K,V](duration, keyWord,countTimesToWarn, s"CLOCK-${keyWord}",warningType, userTag, subject),
         "KSTREAM-CLOCK-COUNT-TO-WARN-",
         false,
         s"CLOCK-${keyWord}")
@@ -35,23 +46,13 @@ object DapengKStreamEnhancer {
     }
 
     def sendDingding(user: String) = {
-      val sendDingDingFunc = (user: String, msg: V) => sendDingDing(user, msg)
+      val sendDingDingFunc = (user: String, msg: V) => sendDingDing(user, msg.asInstanceOf[String])
       toKstream(new DapengSendDingDingProcessor[K,V](user, sendDingDingFunc),"KSTREAM-SEND-DINGDING-", false)
     }
 
     def sendMail(user: String, subJect: String) = {
-      val sendMailFunc = (user: String, subJect: String, msg: V) => sendMailPrivate(user,subJect,msg)
+      val sendMailFunc = (user: String, subJect: String, msg: V) => sendMailPrivate(user,subJect,msg.asInstanceOf[String])
       toKstream(new DapengSendMailProcessor[K,V](user, subJect, sendMailFunc),"KSTREAM-SEND-MAIL-", false)
-    }
-
-    private def sendDingDing(tag: String, msg: V) = {
-      val mailUser = MailUtils.acquireToUserInfoByTag(tag)
-      DispatcherDDUtils.sendMessageToDD(mailUser.getPhones,MailUtils.acquireSubjectByTag(tag),msg.toString)
-    }
-
-    //TODO: zhupeng 提供
-    private def sendMailPrivate(tag: String, subJect: String, msg: V) = {
-      MailUtils.sendEmail(MailUtils.acquireToUserInfoByTag(tag).mailsTo,subJect,msg.toString)
     }
 
     private def toKstream(processor: ProcessorSupplier[K,V], name: String, needRepartition: Boolean) = {
