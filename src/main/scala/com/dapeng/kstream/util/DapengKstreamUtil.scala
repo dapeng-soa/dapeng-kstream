@@ -13,11 +13,16 @@ object DapengKstreamUtil {
 
       """
 
-   def getStarter =
+   def getStarter = {
+     val kafkaServer = DapengKstreamProperty.KAFKA_SERVER
+     if (kafkaServer.isEmpty) {
+       throw new Exception("kafka.server env could not be empty..please set kafka.server env before you run this app...")
+     }
+     s"""
+        start(s"${kafkaServer}", "latest")
       """
+   }
 
-        start("192.168.241.177:9092", "latest")
-      """
 
   def wrapFunction(functionContent: String) = {
     val functionHeader =

@@ -59,7 +59,7 @@ object Main {
 
       result._1 match {
         case Success(f: (() => Unit)) =>
-          println("matched function. start to execute...")
+          logger.info(s"matched function. start to execute..${fileName}.")
           f()
         case Success(x: (Any => Any)) => x()
         case Success(x: (Any => Unit)) => x()

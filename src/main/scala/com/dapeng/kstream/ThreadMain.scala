@@ -5,7 +5,7 @@ import java.util
 import java.util.concurrent._
 
 import com.dapeng.kstream.Main
-import com.dapeng.kstream.util.CommonUtil
+import com.dapeng.kstream.util.{CommonUtil, DapengKstreamProperty}
 import org.apache.commons.lang.StringUtils
 import org.apache.kafka.streams.KafkaStreams
 import org.slf4j.LoggerFactory
@@ -31,12 +31,10 @@ object ThreadMain {
       new Thread(r, "DAPENG-KSTREAM-MAIN-THREAD")
     })
 
-    CommonUtil.loadSystemProperties(new File("kstreams.properties"))
-
-    val workPath = System.getProperty("WORK_HOME")
+    val workPath = DapengKstreamProperty.DAPENG_STREAM_WORK_HOME
     logger.info(s" current work_path: ${workPath}")
     if (StringUtils.isEmpty(workPath)) {
-      throw new Exception(" WORK_HOME could not be empty. please set WORK_HOME env before your run this application.")
+      throw new Exception(" DAPENG_KSTREAM_WORK_HOME could not be empty. please set DAPENG_KSTREAM_WORK_HOME env before your run this application.")
     }
 
     val workDir = new File(workPath)
