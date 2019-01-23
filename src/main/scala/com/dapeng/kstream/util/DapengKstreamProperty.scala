@@ -1,11 +1,22 @@
 package com.dapeng.kstream.util
 
-import java.io.File
+import java.io.{File, FileNotFoundException}
+
 
 object DapengKstreamProperty {
 
   {
-    CommonUtil.loadSystemProperties(new File("kstreams.properties"))
+    initEnv()
+  }
+
+  def initEnv() = {
+    val path = System.getProperty("user.dir")
+    val propertiesPath = path + File.separator + "kstreams.properties"
+    val file = new File(propertiesPath)
+    if (!file.exists()) {
+      throw new FileNotFoundException("kstreams.properties not found.. please check")
+    }
+    CommonUtil.loadSystemProperties(file)
   }
 
   val KEY_DAPENG_KSTREAM_WORK_HOME = "dapeng.kstream.work.home"

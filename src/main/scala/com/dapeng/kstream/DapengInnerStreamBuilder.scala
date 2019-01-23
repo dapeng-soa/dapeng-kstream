@@ -42,6 +42,8 @@ class DapengInnerStreamBuilder[K,V](consumed: Consumed[K,V]) {
     sys.ShutdownHookThread {
       kstream.close(Duration.ofSeconds(10))
     }
+
+    kstream
   }
 }
 

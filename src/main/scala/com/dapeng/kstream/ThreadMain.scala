@@ -71,28 +71,34 @@ object ThreadMain {
       val funcDir = functionsPath
       val files: Array[File] = funcDir.listFiles()
       if (files == null || files.length <= 0) {
-        logger.info(" No function files found. start to shutdown every running dapeng-kstream thread..")
+        logger.info(s" No function files found. start to shutdown every running dapeng-kstream thread. threadMaps size: ${threadMaps.size()}.")
         //清除运行信息
         clearFileContent(runningInfoFile)
         //关闭运行的程序
-        threadMaps.asScala.foreach(i => while (!i._2.isInterrupted || i._2.isAlive) {
-          interruptThread(i._2)
-          Thread.sleep(1000)
+        threadMaps.asScala.foreach(i => interruptThread(i._2))
+
+        threadMaps.asScala.foreach(i => {
+          logger.info(s" current interrunpted threadInfo: state: ${i._2.getState}, isInterrupted: ${i._2.isInterrupted}, isAlive: ${i._2.isAlive}")
         })
         threadMaps.clear()
 
+        logger.info(" finished clear running threads......")
       } else {
         logger.info(s" functions file found...file size: ${files.length}, threadMaps.size: ${threadMaps.size()}")
-
         clearOldThreads(files.toList, threadMaps)
 
         files.toList.foreach(funcFile => {
           updateRunningInfo(runningInfoFile, funcFile)
-
           needRestartDapengKStream(funcFile, runningInfoFile) match {
-            case true => restartDapengKStream(funcFile, threadMaps)
-            case false => if (!threadMaps.containsKey(funcFile.getName)) startDapengKStream(funcFile, threadMaps)
+            case true =>
+              updateRunningInfo(runningInfoFile, funcFile)
+              restartDapengKStream(funcFile, threadMaps)
+            case false => if (!threadMaps.containsKey(funcFile.getName)) {
+              updateRunningInfo(runningInfoFile, funcFile)
+              startDapengKStream(funcFile, threadMaps)
+            }
           }
+
 
         })
       }
@@ -122,7 +128,7 @@ object ThreadMain {
       logger.info(s" start to interrupt running thread, threadName: ${t.getName}")
       t.interrupt()
     } catch {
-      case e: InterruptedException => logger.warn(s"failed to interrupt current thread, ${t.getName}, error: ${e.getMessage}")
+      case e: InterruptedException => logger.info(s"failed to interrupt current thread, ${t.getName}, error: ${e.getMessage}")
       case e: Exception => logger.error(s" failed to interrupt current thread.. ${t.getName}, error: ${e.getMessage}")
     } finally {
       logger.info(s" current interrupting thread ${t.getName} status: ${t.getState}, isInterrupted: ${t.isInterrupted}")
@@ -150,10 +156,7 @@ object ThreadMain {
     if (threadMaps.size() > functionFiles.size) {
       threadMaps.asScala.filterNot(i => functionFiles.map(_.getName).contains(i._1)).foreach(t => {
         logger.info(s" start to clean unused thread. threadName: ${t._2.getName}")
-        while (!t._2.isInterrupted || t._2.isAlive) {
-          interruptThread(t._2)
-          Thread.sleep(1000)
-        }
+        interruptThread(t._2)
         threadMaps.remove(t._1)
       })
     }
@@ -164,7 +167,6 @@ object ThreadMain {
   }
 
   private def updateRunningInfo(runningInfoFile: File, currentFuncFile: File) = {
-    logger.info(s" current function need to restart. file: ${currentFuncFile.getName}")
     val configContent = readFile(runningInfoFile)
     logger.info(s"runningInfo oriContent: ${configContent}")
     val newConfigContent = configContent.filterNot(_.contains(currentFuncFile.getName)) ++ List(s"${currentFuncFile.getName} ${currentFuncFile.lastModified()}")
@@ -202,9 +204,26 @@ object ThreadMain {
 
 class DapengStreamThread(threadName: String, functionFile: File) extends Thread {
 
+  val localKafkaStreams = new ThreadLocal[KafkaStreams]
+  val logger = LoggerFactory.getLogger(classOf[KafkaStreams])
+
   override def run() {
-    setName(threadName)
     super.run()
-    Main.main(Array(functionFile.getAbsolutePath))
+    setName(threadName)
+    val kafkaStreams = Main.main(Array(functionFile.getAbsolutePath))
+    localKafkaStreams.set(kafkaStreams)
+
+    while (localKafkaStreams.get() != null) {
+      try {
+        Thread.sleep(Integer.MAX_VALUE)
+      } catch {
+        case e: InterruptedException =>
+          logger.info(s"received interrupt msg.. start to graceful shutdown dapeng kstream...${e.getMessage}")
+          localKafkaStreams.get().close()
+          localKafkaStreams.remove()
+      }
+    }
+
+
   }
 }

@@ -19,7 +19,9 @@ object Main {
 
   val logger = LoggerFactory.getLogger(classOf[KafkaStreams])
 
-  def main(args: Array[String]): Unit = {
+  var kafkaStreams: KafkaStreams = null
+
+  def main(args: Array[String]) = {
 
     if (args == null || args.isEmpty) {
       throw new Exception(" Please input dapeng-kstream file content absolute path..")
@@ -57,12 +59,12 @@ object Main {
 
       val result: (Res[Any], Seq[(Path, Long)]) = ammonite.Main().runScript(Path(execFile.getAbsolutePath), Seq(("args", Option.empty)))
 
-      result._1 match {
-        case Success(f: (() => Unit)) =>
+      kafkaStreams = result._1 match {
+        case Success(f: (() => KafkaStreams)) =>
           logger.info(s"matched function. start to execute..${fileName}.")
           f()
-        case Success(x: (Any => Any)) => x()
-        case Success(x: (Any => Unit)) => x()
+//        case Success(x: (Any => Any)) => x()
+//        case Success(x: (Any => Unit)) => x()
         case _ => throw new Exception(s"非法函数...${result._1}")
       }
 
@@ -72,5 +74,6 @@ object Main {
       outputStream.close()
     }
 
+    kafkaStreams
   }
 }
