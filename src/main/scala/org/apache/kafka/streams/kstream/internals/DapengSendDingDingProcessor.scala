@@ -2,7 +2,7 @@ package org.apache.kafka.streams.kstream.internals
 
 import org.apache.kafka.streams.processor.{AbstractProcessor, Processor, ProcessorSupplier}
 
-class DapengSendDingDingProcessor[K,V](user: String, sendDingDingFunc: (String, V) => Unit) extends ProcessorSupplier[K,V] {
+class DapengSendDingDingProcessor[K,V](user: String, mapper: (K,V) => (K, String), sendDingDingFunc: (String, String) => Unit) extends ProcessorSupplier[K,V] {
 
   override def get(): Processor[K, V] = new SendDingDingProcessor
 
@@ -10,7 +10,8 @@ class DapengSendDingDingProcessor[K,V](user: String, sendDingDingFunc: (String, 
 
     override def process(key: K, value: V): Unit = {
       //TODO: sendDingDing(user, msg)
-      sendDingDingFunc(user, value)
+      val (_, finalValue) = mapper(key, value)
+      sendDingDingFunc(user, finalValue.toString)
       context().forward(key, value)
     }
   }

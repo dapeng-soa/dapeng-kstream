@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
   "commons-lang" % "commons-lang" % "2.6"
 )
 
-mainClass in assembly := Some("com.dapeng.kstream.Main")
+mainClass in assembly := Some("com.dapeng.kstream.ThreadMain")
 
 lazy val dist = taskKey[File]("make a dist scompose file")
 

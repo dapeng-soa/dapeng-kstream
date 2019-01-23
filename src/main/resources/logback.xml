@@ -23,22 +23,10 @@
     </appender>
 
     <root level="INFO">
-        <if condition='!property("soa.run.mode").equals("native")'>
-            <then>
-                <appender-ref ref="STDOUT"/>
-            </then>
-        </if>
+        <appender-ref ref="STDOUT"/>
         <appender-ref ref="DETAILFILE"/>
     </root>
 
-    <!--sql 日志显示级别-->
     <logger name="org.apache.kafka.clients" level="INFO"/>
-
-
-    <turboFilter class="ch.qos.logback.classic.turbo.MDCFilter">
-        <MDCKey>thread-log-level</MDCKey>
-        <Value>TRACE</Value>
-        <OnMatch>ACCEPT</OnMatch>
-    </turboFilter>
 
 </configuration>

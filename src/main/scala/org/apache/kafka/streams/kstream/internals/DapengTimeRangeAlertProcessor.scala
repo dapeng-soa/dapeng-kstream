@@ -7,15 +7,15 @@ import org.apache.kafka.streams.processor._
 import org.apache.kafka.streams.state.KeyValueStore
 import com.dapeng.kstream.util.DapengWarningUtil._
 
-class DapengClockToClockProcessor[K, V](timeFrom: Int,
-                                        timeTo: Int,
-                                        duration: Duration,
-                                        keyWord: String,
-                                        countTimesToWarn: Int,
-                                        storeName: String,
-                                        warningType: String,
-                                        userTag: String,
-                                        subject: String)
+class DapengTimeRangeAlertProcessor[K, V](timeFrom: Int,
+                                          timeTo: Int,
+                                          duration: Duration,
+                                          keyWord: String,
+                                          countTimesToWarn: Int,
+                                          storeName: String,
+                                          warningType: String,
+                                          userTag: String,
+                                          subject: String)
   extends ProcessorSupplier[K, V] with Logging {
 
   var kvStore: KeyValueStore[String, Long] = null;

@@ -1,6 +1,7 @@
 package com.dapeng.kstream
 
 import org.apache.kafka.streams.scala.kstream.KStream
+import  com.dapeng.kstream.pojo.GcInfo
 
 class DapengKStream[K,V](val innerS : org.apache.kafka.streams.scala.kstream.KStream[K, V]) extends KStream[K,V](innerS.inner){
 

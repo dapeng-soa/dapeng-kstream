@@ -16,7 +16,7 @@ object DapengKstreamUtil {
    def getStarter =
       """
 
-        start("172.17.218.193:9092", "latest")
+        start("192.168.241.177:9092", "latest")
       """
 
   def wrapFunction(functionContent: String) = {

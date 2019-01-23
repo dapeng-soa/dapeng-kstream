@@ -1,6 +1,6 @@
 package com.dapeng.kstream
 
-import java.io.{File, FileNotFoundException, FileOutputStream}
+import java.io.{BufferedOutputStream, File, FileNotFoundException, FileOutputStream}
 
 import ammonite.ops.Path
 import ammonite.util.Res
@@ -8,13 +8,16 @@ import ammonite.util.Res.Success
 import com.dapeng.kstream.util.DapengKstreamUtil._
 import org.slf4j.LoggerFactory
 import com.dapeng.kstream.DapengInnerStreamBuilder
+import org.apache.kafka.streams.KafkaStreams
 import org.apache.kafka.streams.scala.Serdes
 import org.apache.kafka.streams.scala.kstream.{Consumed, Grouped, Materialized}
 import org.apache.kafka.streams.kstream.internals.DapengKStreamEnhancer._
+import com.dapeng.kstream.pojo.GcInfo
+import java.time.Duration
 
 object Main {
 
-  val logger = LoggerFactory.getLogger("Main")
+  val logger = LoggerFactory.getLogger(classOf[KafkaStreams])
 
   def main(args: Array[String]): Unit = {
 
@@ -28,17 +31,29 @@ object Main {
       throw new FileNotFoundException(s" File not found: ${fileName}")
     }
 
+    logger.info(s" received function file: ${file.getAbsolutePath}. start to boot kstream..")
     val fileSource = scala.io.Source.fromFile(fileName)
     val inputFile = fileSource.mkString
+
+    if (inputFile.isEmpty) {
+      throw new Exception(s" 配置告警的文件内容不能为空...${fileName}")
+    }
 
     val func = getHeaderContent + inputFile + getStarter
     val execFuc = wrapFunction(func)
 
-    val execFile = new File(s"${file.getName}_executed.sc")
+
+    val execFile = if (file.getName.indexOf(".") == -1) {
+      new File(s"${file.getName}_executed.sc")
+    } else {
+      new File(s"${file.getName.substring(0, file.getName.lastIndexOf("."))}_executed.sc")
+    }
+
     logger.info(s" the final executed fileName: ${execFile}")
-    val outputStream = new FileOutputStream(execFile)
+    val outputStream = new BufferedOutputStream(new FileOutputStream(execFile))
     try {
       outputStream.write(execFuc.getBytes())
+      outputStream.close()
 
       val result: (Res[Any], Seq[(Path, Long)]) = ammonite.Main().runScript(Path(execFile.getAbsolutePath), Seq(("args", Option.empty)))
 

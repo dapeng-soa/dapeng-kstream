@@ -1,20 +1,64 @@
 package org.apache.kafka.streams.kstream.internals
 
 import java.time.Duration
+import java.util.UUID
 
 import com.dapeng.kstream.DapengKStream
 import com.dapeng.kstream.util.dingding.DispatcherDDUtils
 import com.dapeng.kstream.util.mail.MailUtils
 import org.apache.kafka.streams.kstream.internals.graph.{ProcessorGraphNode, ProcessorParameters, StatefulProcessorNode}
 import org.apache.kafka.streams.processor.ProcessorSupplier
-import org.apache.kafka.streams.scala.Serdes
-import org.apache.kafka.streams.scala.kstream.KStream
+import org.apache.kafka.streams.scala.{ByteArrayKeyValueStore, Serdes}
+import org.apache.kafka.streams.scala.kstream.{KGroupedStream, KStream, Materialized}
 import org.apache.kafka.streams.state.Stores
 import com.dapeng.kstream.util.DapengWarningUtil._
 
 object DapengKStreamEnhancer {
 
+  implicit class KGroupedStreamEnhancer[K,V](kstream: KGroupedStream[K,V]) {
+    def window(duration: Duration, counts: Int) = {
+      val storeName = s"CLOCK-${UUID.randomUUID().toString}"
+      toStatefulKStream(new DapengWindowProcessor[K, V](duration, counts, storeName),
+        "KSTREAM-DAPENG-WINDOW-",
+        false,
+        storeName)
+    }
+
+    private def toStatefulKStream(processor: ProcessorSupplier[K, V], name: String, needRepartition: Boolean, storeName: String) = {
+      val innerKstreamImpl: KGroupedStreamImpl[K, V] = kstream.inner.asInstanceOf[KGroupedStreamImpl[K, V]]
+      val builder = innerKstreamImpl.builder
+      val parentGraphNode = innerKstreamImpl.streamsGraphNode
+      val pName = builder.newProcessorName(name)
+      val processorParameters = new ProcessorParameters[K, V](processor, pName)
+
+      val storeBuilder = Stores.keyValueStoreBuilder(Stores.persistentKeyValueStore(storeName), Serdes.String, Serdes.Long)
+
+      val statefulProcessorNode = new StatefulProcessorNode(pName, processorParameters, storeBuilder, needRepartition)
+
+      builder.addGraphNode(parentGraphNode, statefulProcessorNode)
+
+      val kstreamJ = new KStreamImpl[K, V](pName,
+        innerKstreamImpl.keySerde,
+        innerKstreamImpl.valueSerde(),
+        innerKstreamImpl.sourceNodes,
+        needRepartition,
+        statefulProcessorNode,
+        builder)
+
+      new KStream[K, V](kstreamJ)
+
+    }
+  }
+
   implicit class KStreamImplEnhancer[K, V](kstream: KStream[K, V]) {
+
+    def windowAlertByKey(duration: Duration, countTimesToWarn: Int, warningType: String, userTag: String, subject: String) = {
+      val storeName = s"CLOCK-${UUID.randomUUID().toString}"
+      toStatefulKStream(new DapengWindowAlertWithoutKeyProcessor[K, V](duration, countTimesToWarn, storeName, warningType, userTag, subject),
+        "KSTREAM-CLOCK-COUNT-TO-WARN-",
+        false,
+        storeName)
+    }
 
     /**
       *
@@ -26,8 +70,8 @@ object DapengKStreamEnhancer {
       * @param subject          邮件 或 钉钉的主题
       * @return
       */
-    def clockCountToWarn(duration: Duration, keyWord: String, countTimesToWarn: Int, warningType: String, userTag: String, subject: String) = {
-      toStatefulKStream(new DapengClockProcessor[K, V](duration, keyWord, countTimesToWarn, s"CLOCK-${keyWord}", warningType, userTag, subject),
+    def windowAlert(duration: Duration, keyWord: String, countTimesToWarn: Int, warningType: String, userTag: String, subject: String) = {
+      toStatefulKStream(new DapengWindowAlertProcessor[K, V](duration, keyWord, countTimesToWarn, s"CLOCK-${keyWord}", warningType, userTag, subject),
         "KSTREAM-CLOCK-COUNT-TO-WARN-",
         false,
         s"CLOCK-${keyWord}")
@@ -45,11 +89,11 @@ object DapengKStreamEnhancer {
       * @param subject  邮件 或 钉钉的主题
       * @return KStream[K,V]
       */
-    def clockToClockCountToWarn(timeFrom: Int, timeTo: Int,
-                                duration: Duration, keyWord: String, countTimesToWarn: Int,
-                                warningType: String, userTag: String, subject: String) = {
+    def timeRangeAlsert(timeFrom: Int, timeTo: Int,
+                        duration: Duration, keyWord: String, countTimesToWarn: Int,
+                        warningType: String, userTag: String, subject: String) = {
       toStatefulKStream(
-        new DapengClockToClockProcessor[K, V](timeFrom, timeTo, duration,
+        new DapengTimeRangeAlertProcessor[K, V](timeFrom, timeTo, duration,
           keyWord,
           countTimesToWarn,
           s"CLOCK-TO-CLOCK-${keyWord}",
@@ -65,14 +109,9 @@ object DapengKStreamEnhancer {
       new DapengKStream[K, V](kstream)
     }
 
-    /**
-      * 根据ServiceTag获取用户组，并发送钉钉消息
-      * @param user 业务用户组, 如: orderService
-      * @return
-      */
-    def sendDingding(user: String) = {
-      val sendDingDingFunc = (user: String, msg: V) => sendDingDing(user, msg.asInstanceOf[String])
-      toKstream(new DapengSendDingDingProcessor[K, V](user, sendDingDingFunc), "KSTREAM-SEND-DINGDING-", false)
+    def sendDingding(user: String, mapper: (K,V) => (K, String)) = {
+      val sendDingDingFunc = (user: String, msg: String) => sendDingDing(user, msg)
+      toKstream(new DapengSendDingDingProcessor[K, V](user,mapper, sendDingDingFunc), "KSTREAM-SEND-DINGDING-", false)
     }
 
     /**
@@ -85,6 +124,8 @@ object DapengKStreamEnhancer {
       val sendMailFunc = (user: String, subJect: String, msg: V) => sendMailPrivate(user, subJect, msg.asInstanceOf[String])
       toKstream(new DapengSendMailProcessor[K, V](user, subject, sendMailFunc), "KSTREAM-SEND-MAIL-", false)
     }
+
+
 
     private def toKstream(processor: ProcessorSupplier[K, V], name: String, needRepartition: Boolean) = {
       val innerKstreamImpl: KStreamImpl[K, V] = kstream.inner.asInstanceOf[KStreamImpl[K, V]]
@@ -123,7 +164,7 @@ object DapengKStreamEnhancer {
 
       val kstreamJ = new KStreamImpl[K, V](pName,
         innerKstreamImpl.keySerde,
-        innerKstreamImpl.valueSerde(),
+        innerKstreamImpl.valueSerde,
         innerKstreamImpl.sourceNodes,
         needRepartition,
         statefulProcessorNode,
