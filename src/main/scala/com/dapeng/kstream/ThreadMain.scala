@@ -61,12 +61,12 @@ object ThreadMain {
     //the functions path stores the biz application files
     val functionsPath = new File(workDir + "/functions")
     if (!functionsPath.exists()) {
-      logger.info(s" no functions path foud. start to create new functions dir: ${functionsPath.getAbsolutePath}")
+      logger.info(s" no functions path found. start to create new functions dir: ${functionsPath.getAbsolutePath}")
       functionsPath.mkdir()
     }
 
     mainCheckingThread.scheduleWithFixedDelay(() => {
-      logger.info(" start to check dapeng-kstream functoins files..")
+      logger.info(" start to check dapeng-kstream functions files..")
 
       val funcDir = functionsPath
       val files: Array[File] = funcDir.listFiles()
@@ -78,7 +78,7 @@ object ThreadMain {
         threadMaps.asScala.foreach(i => interruptThread(i._2))
 
         threadMaps.asScala.foreach(i => {
-          logger.info(s" current interrunpted threadInfo: state: ${i._2.getState}, isInterrupted: ${i._2.isInterrupted}, isAlive: ${i._2.isAlive}")
+          logger.info(s" current interrupted threadInfo: state: ${i._2.getState}, isInterrupted: ${i._2.isInterrupted}, isAlive: ${i._2.isAlive}")
         })
         threadMaps.clear()
 

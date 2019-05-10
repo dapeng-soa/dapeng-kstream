@@ -52,7 +52,7 @@ object DapengKStreamEnhancer {
 
   implicit class KStreamImplEnhancer[K, V](kstream: KStream[K, V]) {
 
-    def windowAlertByKey(duration: Duration, countTimesToWarn: Int, warningType: String, userTag: String, subject: String) = {
+    def windowAlertWithoutKey(duration: Duration, countTimesToWarn: Int, warningType: String, userTag: String, subject: String) = {
       val storeName = s"CLOCK-${UUID.randomUUID().toString}"
       toStatefulKStream(new DapengWindowAlertWithoutKeyProcessor[K, V](duration, countTimesToWarn, storeName, warningType, userTag, subject),
         "KSTREAM-CLOCK-COUNT-TO-WARN-",
@@ -89,7 +89,7 @@ object DapengKStreamEnhancer {
       * @param subject  邮件 或 钉钉的主题
       * @return KStream[K,V]
       */
-    def timeRangeAlsert(timeFrom: Int, timeTo: Int,
+    def timeRangeAlert(timeFrom: Int, timeTo: Int,
                         duration: Duration, keyWord: String, countTimesToWarn: Int,
                         warningType: String, userTag: String, subject: String) = {
       toStatefulKStream(

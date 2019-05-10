@@ -7,3 +7,4 @@ dapeng.iml
 .DS_Store
 **/.DS_Store
 /.idea/*
+mailConfig.properties

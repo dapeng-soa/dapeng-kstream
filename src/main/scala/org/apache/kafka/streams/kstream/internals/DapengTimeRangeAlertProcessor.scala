@@ -28,8 +28,7 @@ class DapengTimeRangeAlertProcessor[K, V](timeFrom: Int,
       kvStore = processorContext.getStateStore(storeName).asInstanceOf[KeyValueStore[String, Long]]
       processorContext.schedule(duration, PunctuationType.WALL_CLOCK_TIME, (i) => {
         if (kvStore.all().hasNext) {
-          val currentHour = LocalDateTime.now().getHour
-          if (currentHour >= timeFrom && currentHour < timeTo) {
+          if (isWithInTime(timeFrom, timeTo)) {
             info(s" 当前时间在统计范围${timeFrom} - ${timeTo}内，开始计算....")
             kvStore.all().forEachRemaining(i => {
               val counter: Long = kvStore.get(keyWord)
@@ -60,6 +59,17 @@ class DapengTimeRangeAlertProcessor[K, V](timeFrom: Int,
       val result = kvStore.get(keyWord)
       if (result != null) kvStore.put(keyWord, result + 1) else kvStore.put(keyWord, 1)
     }
+
+    def isWithInTime(timeFrom: Int, timeTo: Int): Boolean = {
+      val currentHour = LocalDateTime.now().getHour
+      if (timeFrom <= timeTo) {
+        currentHour >= timeFrom && currentHour < timeTo
+      } else {
+        currentHour >= timeFrom || currentHour < timeTo
+      }
+
+    }
+
   }
 
 }
