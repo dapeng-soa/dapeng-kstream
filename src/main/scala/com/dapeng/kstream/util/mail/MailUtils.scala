@@ -47,7 +47,7 @@ object MailUtils {
     * @return 通过tag获取主题信息
     */
   def acquireSubjectByTag(tag: String): String = {
-    val info = "您负责的项目 [\" + tag + \"] 产生了自定义埋点信息，请安排相关人员查看并及时处理。"
+    val info = "您负责的项目 [" + tag + "] 产生了自定义埋点信息，请安排相关人员查看并及时处理。"
     info
   }
 

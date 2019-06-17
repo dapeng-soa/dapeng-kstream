@@ -46,7 +46,7 @@ object KstreamThroughTest {
           //.sendDingding("kstreamTest", (k, v) => (k, v))*/
 
     topic("dapeng-kstream-test")
-      .dapengFilter((_, v) => v.contains("@@@@"))
+      .dapengFilter((_, v) => v.contains("::startup end") || v.contains(" ------------ SpringClassLoader:"))
       .sendDingding("kstreamTest", (k, v) => (k, v))
 
     start("192.168.4.221:9092", "latest")

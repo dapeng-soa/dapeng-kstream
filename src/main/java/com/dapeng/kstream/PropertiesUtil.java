@@ -20,7 +20,7 @@ public class PropertiesUtil {
 
     public static Properties properties;
 
-    public static Map<String,MailUser> MAIL_SEND_CONFIG;
+    public static Map<String, MailUser> MAIL_SEND_CONFIG;
 
     static {
         properties = new Properties();
@@ -90,6 +90,17 @@ public class PropertiesUtil {
 
     public final static String DEFAULT_TO_NAME = properties.getProperty("mail.to.email");
 
+    public final static boolean SEND_DD_TEST = Boolean.valueOf(properties.getProperty("sendDingDingTest"));
+
+    public final static String DD_TOKEN_TEST = properties.getProperty("DD_TOKEN_TEST");
+
+    public final static String DD_TOKEN = properties.getProperty("DD_TOKEN");
+
+    public final static String MESSAGE_IMAGE_URL = properties.getProperty("message_image_url");
+
+    public final static String ES_HOST = properties.getProperty("es_host");
+
+    public final static String ES_QUERY_HOST = properties.getProperty("es_query_host");
 
 
 }

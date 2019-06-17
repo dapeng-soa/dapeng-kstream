@@ -70,7 +70,7 @@ object ThreadMain {
 
       val funcDir = functionsPath
       val files: Array[File] = funcDir.listFiles()
-      if (files == null || files.length <= 0) {
+        if (files == null || files.length <= 0) {
         logger.info(s" No function files found. start to shutdown every running dapeng-kstream thread. threadMaps size: ${threadMaps.size()}.")
         //清除运行信息
         clearFileContent(runningInfoFile)

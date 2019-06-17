@@ -7,12 +7,12 @@ object DapengWarningUtil {
 
   def sendDingDing(tag: String, msg: String): Unit = {
     val mailUser = MailUtils.acquireToUserInfoByTag(tag)
-    DispatcherDDUtils.sendMessageToDD(mailUser.getPhones,MailUtils.acquireSubjectByTag(tag),msg)
+    DispatcherDDUtils.sendMessageToDD(mailUser, tag, msg)
   }
 
   //TODO: zhupeng 提供
   def sendMailPrivate(tag: String, subJect: String, msg: String) = {
-    MailUtils.sendEmail(MailUtils.acquireToUserInfoByTag(tag).mailsTo,subJect,msg)
+    MailUtils.sendEmail(MailUtils.acquireToUserInfoByTag(tag).mailsTo, subJect, msg)
   }
 
   def sendWarning(warningType: String, userTag: String, subject: String, content: String) = {
