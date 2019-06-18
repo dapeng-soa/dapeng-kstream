@@ -47,7 +47,12 @@ object KstreamThroughTest {
 
     topic("dapeng-kstream-test")
       .dapengFilter((_, v) => v.contains("::startup end") || v.contains(" ------------ SpringClassLoader:"))
-      .sendDingding("kstreamTest", (k, v) => (k, v))
+      .sendDingding("kstreamTest", (k,v: String) => {
+        val msg = s" 产生自定义日志告警，日志信息为: ${String.valueOf(v)}"
+        (k, msg)
+      })
+
+
 
     start("192.168.4.221:9092", "latest")
   }

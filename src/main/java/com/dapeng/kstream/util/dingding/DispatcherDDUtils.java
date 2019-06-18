@@ -42,7 +42,7 @@ public class DispatcherDDUtils {
         map.put("title", MailUtils.acquireSubjectByTag(tag));
         buffer.append("\n").append("#### <font color=#FFA500>【重要】</font> Dear " + users.getUserName() + ":").append("\n");
         buffer.append("\n").append("---").append("\n");
-        buffer.append("\n").append("&#8194;&#8194;您负责的项目 [" + tag + "] 出现异常，请安排相关人员查看错误原因并及时处理。确保系统正常运行！").append("\n");
+        buffer.append("\n").append("&#8194;&#8194;您负责的项目 [" + tag + "] 产生如下自定义监控告警，请及时查看：").append("\n");
         buffer.append("\n").append(text).append("\n");
         map.put("text", buffer.append("\n\n").toString());
         String splitStr = text.split(",")[3].split(":")[1];
