@@ -9,15 +9,15 @@ dapeng-kstream开发的初衷，由于kafka-kstream有一定的学习成本，�
 ### 1. 基本部署流程
 > 前期在部署中心页面功能未完善之前，暂时需要运维帮忙手动操作一下，后续页面操作功能完善后，业务部门就只需要关心自己的告警逻辑。
 
-1. 用户自定义告警逻辑保存为文件并上传到服务器指定目录(如 `/opt/kstream/orderWarning.txt`) (**后面会说到具体如何定义自己的告警逻辑**)
-2. 调用DapengKStream引擎 => `java -jar dapengKstream.jar -Dname=orderWarning /opt/kstream/orderWarning.sc `
+1. 用户自定义告警逻辑(例如：orderWarning.sc)保存为文件并上传到服务器指定目录(放在工作目录下的functions目录下，在kstream.properties中可以指定工作目录) (**后面会说到具体如何定义自己的告警逻辑**)
+2. 调用DapengKStream引擎(需要将kstream.properties和mailConfig.properties与jar包放在同一个目录下) => `java -jar dapengKstream.jar`
 
 ### 2. Dapeng-kstream 提供的拓展接口:
 ```java
 /**
 * 提供一个返回布尔值的函数: true: 下一个节点继续处理该消息，false: 丢弃
-* k: kafka流式消息的key, 生产者发送消息时指定的key 默认为null， 可以通过dapengMap, clockToWarn函数转换为其他值
-* v: kafka流式消息的value， value一般为业务接收的原始消息， 可以通过dapengMap,clockToWarn函数转换值
+* k: kafka流式消息的key, 生产者发送消息时指定的key 默认为null， 可以通过dapengMap, windowAlert函数转换为其他值
+* v: kafka流式消息的value， value一般为业务接收的原始消息， 可以通过dapengMap,windowAlert函数转换值
 * @param p the provided func
 * @return DapengKStream[K,V]
 */
@@ -57,12 +57,12 @@ def dapengMap[KR, VR](mapper: (K, V) => (KR, VR)): DapengKStream[KR, VR]
   * @param subject  邮件 或 钉钉的主题
   * @return KStream[K,V]
   */
-def clockCountToWarn(duration: Duration, 
-                    keyWord: String, 
-                    countTimesToWarn: Int, 
-                    warningType:String, 
-                    userTag: String, 
-                    subject: String)
+def windowAlert(duration: Duration, 
+                keyWord: String, 
+                countTimesToWarn: Int, 
+                warningType:String, 
+                userTag: String, 
+                subject: String)
 
 /**
   * 该方式适用于有定时启动范围的需求： 如2点到6点内，统计每分钟的指定消息
@@ -76,21 +76,22 @@ def clockCountToWarn(duration: Duration,
   * @param subject  邮件 或 钉钉的主题
   * @return KStream[K,V]
   */
-def clockToClockCountToWarn(timeFrom: Int, 
-                            timeTo: Int,
-                            duration: Duration, 
-                            keyWord: String,         
-                            countTimesToWarn: Int,
-                            warningType: String, 
-                            userTag: String, 
-                            subject: String): KStream[K,V]
+def timeRangeAlert(timeFrom: Int, 
+                    timeTo: Int,
+                    duration: Duration, 
+                    keyWord: String,         
+                    countTimesToWarn: Int,
+                    warningType: String, 
+                    userTag: String, 
+                    subject: String): KStream[K,V]
 
 /**
   * 根据ServiceTag获取用户组，并发送钉钉消息
   * @param user 业务用户组, 如: orderService
+  * @param mapper 发送到钉钉的目标消息(_, context) = mapper(key, value)
   * @return
   */
-def sendDingding(userTag: String)
+def sendDingding(userTag: String, mapper: (K,V) => (K, String))
 
 /**
   * 根据ServiceTag获取用户组，并根据设置的标题发送邮件
@@ -113,7 +114,10 @@ def sendMail(user: String, subject: String)
     topic("order_topic")
     .dapengFilter((_,v) => v.contains("ERROR") || v.contains("Exception"))
     .sendMail("orderGroup", "订单错误异常告警")
-    .sendDingding(("orderGrooup")
+    .sendDingding("orderGrooup", (k,v: String) => { 
+      val msg = s" 订单错误异常告警，日志信息为: ${String.valueOf(v)}"
+     (k, msg)
+   })
 
     ```
     > 上面的意思是： 订阅对应的消息主题，过滤消息包含错误或异常的消息，然后发邮件，钉钉
@@ -124,7 +128,7 @@ def sendMail(user: String, subject: String)
     topic("efk")
     .serviceFilter("orderService")
     .dapengFilter((_,v) => v.contains("FullGc"))
-    .clockCountToWarn(Duration.ofMinutes(1), 
+    .windowAlert(Duration.ofMinutes(1), 
             "ERROR",
              2,
             "all", //（all： 包含发邮件，钉钉告警, 详见2的APi接口参数）
@@ -137,7 +141,7 @@ def sendMail(user: String, subject: String)
     .serviceFilter("orderService")
     .dapengFilter((_,v) => v.contains("FullGc"))
     .dapengMap((k,v) => s"FullGc高过预期: $v")
-    .clockCountToWarn(Duration.ofMinutes(1), 
+    .windowAlert(Duration.ofMinutes(1), 
             "ERROR",
              2,
             "all", //（all： 包含发邮件，钉钉告警, 详见2的APi接口参数）
@@ -163,7 +167,7 @@ def sendMail(user: String, subject: String)
         (k,String.valueOf(amount))
     })
     .filter((k,v) => v.toDouble > 1000)
-    .sendMail("bbliang@today36524.com.cn", "订单异常")
+    .sendMail("orderGroup", "订单异常")
     ```
     
 * 4.在凌晨6点到第二天凌晨2点， 一分钟内没有订单产生的话告警
@@ -172,7 +176,7 @@ def sendMail(user: String, subject: String)
     topic("test")
     .serviceFilter("orderService")
     .dapengFilter((_,v) => v.contains("createOrder"))
-    .clockToClockCountToWarn(2,
+    .timeRangeAlert(2,
             6,
             Duration.ofMinutes(1), 
             "createOrder",
