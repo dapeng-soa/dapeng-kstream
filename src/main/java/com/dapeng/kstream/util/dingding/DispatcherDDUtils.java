@@ -39,18 +39,26 @@ public class DispatcherDDUtils {
     public static void sendMessageToDD(MailUser users, String tag, String text) {
         Map map = new HashMap();
         StringBuffer buffer = new StringBuffer();
-        map.put("title", MailUtils.acquireSubjectByTag(tag));
+        String serviceTag = tag;
+        String sessionTid = "";
+        if (text.contains("sessionTid")) {
+            String[] fields = text.split("\\{")[1].split(",");
+            String serviceStr = fields[6].split(":")[1];
+            serviceTag = serviceStr.substring(1, serviceStr.length() - 2);
+            String sessionStr = fields[3].split(":")[1];
+            sessionTid = sessionStr.substring(1, sessionStr.length() - 1);
+        }
+
+        map.put("title", MailUtils.acquireSubjectByTag(serviceTag));
         buffer.append("\n").append("#### <font color=#FFA500>【重要】</font> Dear " + users.getUserName() + ":").append("\n");
         buffer.append("\n").append("---").append("\n");
-        buffer.append("\n").append("&#8194;&#8194;您负责的项目 [" + tag + "] 产生如下自定义监控告警，请及时查看：").append("\n");
+        buffer.append("\n").append("&#8194;&#8194;您负责的项目 [" + serviceTag + "] 产生如下自定义监控告警，请及时查看：").append("\n");
         buffer.append("\n").append(text).append("\n");
         map.put("text", buffer.append("\n\n").toString());
-        String splitStr = text.split(",")[3].split(":")[1];
-        String sessionTid = splitStr.substring(1, splitStr.length() - 1);
         sendMessageToDD(users.getPhones(), map);
         if (!sessionTid.isEmpty()) {
-            map.put("sessionTid",sessionTid);
-            map.put("htmlTitle","Dear: " + users.getUserName());
+            map.put("sessionTid", sessionTid);
+            map.put("htmlTitle", "Dear: " + users.getUserName());
             sendLogHtmlToDD(users.getPhones(), map);
         }
     }
