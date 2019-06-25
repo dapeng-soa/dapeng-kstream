@@ -27,6 +27,6 @@ class BootstrapImpl extends AbstractBootstrap{
         (k,v: String) => {
         val msg = s" Full Gc告警， service: ${k}, expect: 2, actual: ${String.valueOf(v)}"
         (k, msg)
-      })
+      },"BUSINESS")
   }
 }

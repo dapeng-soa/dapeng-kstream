@@ -54,7 +54,7 @@ object KstreamThroughTest {
       .sendDingding("kstreamTest", (k,v: String) => {
         val msg = s" 产生自定义日志告警，日志信息为: ${String.valueOf(v)}"
         (k, msg)
-      })
+      },"BUSINESS")
 
 
 
