@@ -5,6 +5,7 @@ import com.dapeng.kstream.PropertiesUtil;
 import com.dapeng.kstream.pojo.MailUser;
 import com.dapeng.kstream.util.HttpUtils;
 import com.dapeng.kstream.util.mail.MailUtils;
+import scala.sys.Prop;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,23 +21,25 @@ public class DispatcherDDUtils {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
-    public static void sendMessageToDD(Set<String> atPeoples, Map markDownMap) {
+    public static void sendMessageToDD(Set<String> atPeoples, Map markDownMap, String urlTag) {
         if (PropertiesUtil.SEND_DD_TEST) {
             HttpUtils.doPostJson(PropertiesUtil.DD_TOKEN_TEST, buildMdMsgSendDDMap(atPeoples, markDownMap), "UTF-8");
         } else {
-            HttpUtils.doPostJson(PropertiesUtil.DD_TOKEN, buildMdMsgSendDDMap(atPeoples, markDownMap), "UTF-8");
+            String url = getUrl(urlTag);
+            HttpUtils.doPostJson(url, buildMdMsgSendDDMap(atPeoples, markDownMap), "UTF-8");
         }
     }
 
-    public static void sendLogHtmlToDD(Set<String> atPeoples, Map markDownMap) {
+    public static void sendLogHtmlToDD(Set<String> atPeoples, Map markDownMap,String urlTag) {
         if (PropertiesUtil.SEND_DD_TEST) {
             HttpUtils.doPostJson(PropertiesUtil.DD_TOKEN_TEST, buildHtmlMsgSendDDMap(atPeoples, markDownMap), "UTF-8");
         } else {
-            HttpUtils.doPostJson(PropertiesUtil.DD_TOKEN, buildHtmlMsgSendDDMap(atPeoples, markDownMap), "UTF-8");
+            String url = getUrl(urlTag);
+            HttpUtils.doPostJson(url, buildHtmlMsgSendDDMap(atPeoples, markDownMap), "UTF-8");
         }
     }
 
-    public static void sendMessageToDD(MailUser users, String tag, String text) {
+    public static void sendMessageToDD(MailUser users, String tag, String text,String urlTag) {
         Map map = new HashMap();
         StringBuffer buffer = new StringBuffer();
         String serviceTag = tag;
@@ -55,11 +58,11 @@ public class DispatcherDDUtils {
         buffer.append("\n").append("&#8194;&#8194;您负责的项目 [" + serviceTag + "] 产生如下自定义监控告警，请及时查看：").append("\n");
         buffer.append("\n").append(text).append("\n");
         map.put("text", buffer.append("\n\n").toString());
-        sendMessageToDD(users.getPhones(), map);
+        sendMessageToDD(users.getPhones(), map,urlTag);
         if (!sessionTid.isEmpty()) {
             map.put("sessionTid", sessionTid);
             map.put("htmlTitle", "Dear: " + users.getUserName());
-            sendLogHtmlToDD(users.getPhones(), map);
+            sendLogHtmlToDD(users.getPhones(), map,urlTag);
         }
     }
 
@@ -97,6 +100,17 @@ public class DispatcherDDUtils {
         }
         map.put(key, value);
         return map;
+    }
+
+    private static String getUrl(String urlTag) {
+        switch (urlTag) {
+            case "FRONT":
+                return PropertiesUtil.FRONT_URL;
+            case "DEVOPS":
+                return PropertiesUtil.DEVEOPS_URL;
+            default:
+                return PropertiesUtil.BUSINESS_URL;
+        }
     }
 
 

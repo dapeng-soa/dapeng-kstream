@@ -15,7 +15,7 @@ class DapengTimeRangeAlertProcessor[K, V](timeFrom: Int,
                                           storeName: String,
                                           warningType: String,
                                           userTag: String,
-                                          subject: String)
+                                          subject: String,urlTag:String)
   extends ProcessorSupplier[K, V] with Logging {
 
   var kvStore: KeyValueStore[String, Long] = null;
@@ -39,7 +39,7 @@ class DapengTimeRangeAlertProcessor[K, V](timeFrom: Int,
                   s"""
                   ${duration.toMinutes} 分钟内， ${keyWord} 出现的次数超过预期, 预期 < ${countTimesToWarn}, 当前: ${counter}
                 """
-                sendWarning(warningType, userTag, subject, warningContent)
+                sendWarning(warningType, userTag, subject, warningContent,urlTag)
               }
               kvStore.delete(keyWord)
 

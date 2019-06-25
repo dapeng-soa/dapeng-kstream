@@ -52,9 +52,9 @@ object DapengKStreamEnhancer {
 
   implicit class KStreamImplEnhancer[K, V](kstream: KStream[K, V]) {
 
-    def windowAlertWithoutKey(duration: Duration, countTimesToWarn: Int, warningType: String, userTag: String, subject: String) = {
+    def windowAlertWithoutKey(duration: Duration, countTimesToWarn: Int, warningType: String, userTag: String, subject: String,urlTag:String) = {
       val storeName = s"CLOCK-${UUID.randomUUID().toString}"
-      toStatefulKStream(new DapengWindowAlertWithoutKeyProcessor[K, V](duration, countTimesToWarn, storeName, warningType, userTag, subject),
+      toStatefulKStream(new DapengWindowAlertWithoutKeyProcessor[K, V](duration, countTimesToWarn, storeName, warningType, userTag, subject,urlTag),
         "KSTREAM-CLOCK-COUNT-TO-WARN-",
         false,
         storeName)
@@ -70,8 +70,8 @@ object DapengKStreamEnhancer {
       * @param subject          邮件 或 钉钉的主题
       * @return
       */
-    def windowAlert(duration: Duration, keyWord: String, countTimesToWarn: Int, warningType: String, userTag: String, subject: String) = {
-      toStatefulKStream(new DapengWindowAlertProcessor[K, V](duration, keyWord, countTimesToWarn, s"CLOCK-${keyWord}", warningType, userTag, subject),
+    def windowAlert(duration: Duration, keyWord: String, countTimesToWarn: Int, warningType: String, userTag: String, subject: String,urlTag:String) = {
+      toStatefulKStream(new DapengWindowAlertProcessor[K, V](duration, keyWord, countTimesToWarn, s"CLOCK-${keyWord}", warningType, userTag, subject,urlTag),
         "KSTREAM-CLOCK-COUNT-TO-WARN-",
         false,
         s"CLOCK-${keyWord}")
@@ -91,7 +91,7 @@ object DapengKStreamEnhancer {
       */
     def timeRangeAlert(timeFrom: Int, timeTo: Int,
                         duration: Duration, keyWord: String, countTimesToWarn: Int,
-                        warningType: String, userTag: String, subject: String) = {
+                        warningType: String, userTag: String, subject: String,urlTag:String) = {
       toStatefulKStream(
         new DapengTimeRangeAlertProcessor[K, V](timeFrom, timeTo, duration,
           keyWord,
@@ -99,7 +99,7 @@ object DapengKStreamEnhancer {
           s"CLOCK-TO-CLOCK-${keyWord}",
           warningType,
           userTag,
-          subject),
+          subject,urlTag),
         "KSTREAM-CLOCK-TO-CLOCK-COUNT-TO-WARN-",
         false,
         s"CLOCK-TO-CLOCK-${keyWord}")
@@ -109,8 +109,8 @@ object DapengKStreamEnhancer {
       new DapengKStream[K, V](kstream)
     }
 
-    def sendDingding(user: String, mapper: (K,V) => (K, String)) = {
-      val sendDingDingFunc = (user: String, msg: String) => sendDingDing(user, msg)
+    def sendDingding(user: String, mapper: (K,V) => (K, String) , urlTag:String) = {
+      val sendDingDingFunc = (user: String, msg: String) => sendDingDing(user, msg, urlTag)
       toKstream(new DapengSendDingDingProcessor[K, V](user,mapper, sendDingDingFunc), "KSTREAM-SEND-DINGDING-", false)
     }
 

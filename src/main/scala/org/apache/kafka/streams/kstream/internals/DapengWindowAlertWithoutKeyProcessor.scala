@@ -10,7 +10,7 @@ import org.apache.kafka.streams.state.KeyValueStore
 class DapengWindowAlertWithoutKeyProcessor[K, V](duration: Duration,
                                                  countTimesToWarn: Int, storeName: String,
                                                  warningType: String,
-                                                 userTag: String, subject: String)
+                                                 userTag: String, subject: String,urlTag:String)
   extends ProcessorSupplier[K, V] with Logging {
 
   var kvStore: KeyValueStore[String, Long] = null;
@@ -33,7 +33,7 @@ class DapengWindowAlertWithoutKeyProcessor[K, V](duration: Duration,
                 s"""
                   ${duration.toMinutes} 分钟内， ${i.key} 出现的次数超过预期, 预期 < ${countTimesToWarn}, 当前: ${counter}
                 """
-              sendWarning(warningType, userTag, subject, warningContent)
+              sendWarning(warningType, userTag, subject, warningContent,urlTag)
               println(s" ClockProcessor start to send warning mail...${i.key}, ${i.value}")
             } else {
               warn(" counter less than ")
