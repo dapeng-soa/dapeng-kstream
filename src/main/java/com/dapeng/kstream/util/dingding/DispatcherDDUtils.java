@@ -9,6 +9,8 @@ import com.dapeng.kstream.util.mail.MailUtils;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 /**
  * 接入钉钉工具类
@@ -19,6 +21,8 @@ import java.util.*;
 public class DispatcherDDUtils {
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+    private static final Pattern pattern1 = Pattern.compile(".*\"sessionTid\":\"([^\"]*)\".*\"tag\":\"([^\"]*)\".*");
+    private static final Pattern pattern2 = Pattern.compile(".*\"tag\":\"([^\"]*)\".*\"sessionTid\":\"([^\"]*)\".*");
 
     public static void sendMessageToDD(Set<String> atPeoples, Map markDownMap) {
         if (PropertiesUtil.SEND_DD_TEST) {
@@ -41,12 +45,14 @@ public class DispatcherDDUtils {
         StringBuffer buffer = new StringBuffer();
         String serviceTag = tag;
         String sessionTid = "";
-        if (text.contains("sessionTid")) {
-            String[] fields = text.split("\\{")[1].split(",");
-            String serviceStr = fields[6].split(":")[1];
-            serviceTag = serviceStr.substring(1, serviceStr.length() - 2);
-            String sessionStr = fields[3].split(":")[1];
-            sessionTid = sessionStr.substring(1, sessionStr.length() - 1);
+        Matcher matchPattern1 = pattern1.matcher(text);
+        Matcher matchPattern2 = pattern2.matcher(text);
+        if (matchPattern1.matches()) {
+            sessionTid = matchPattern1.group(1);
+            serviceTag = matchPattern1.group(2);
+        }else if (matchPattern2.matches()){
+            serviceTag = matchPattern2.group(1);
+            sessionTid = matchPattern2.group(2);
         }
 
         map.put("title", MailUtils.acquireSubjectByTag(serviceTag));
