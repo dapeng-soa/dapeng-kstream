@@ -102,5 +102,10 @@ public class PropertiesUtil {
 
     public final static String ES_QUERY_HOST = properties.getProperty("es_query_host");
 
+    public final static String FRONT_URL=properties.getProperty("FRONT_URL");
+
+    public final static String DEVEOPS_URL=properties.getProperty("DEVEOPS_URL");
+
+    public final static String BUSINESS_URL=properties.getProperty("BUSINESS_URL");
 
 }

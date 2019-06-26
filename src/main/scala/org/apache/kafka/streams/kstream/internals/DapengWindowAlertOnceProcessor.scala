@@ -10,7 +10,7 @@ import org.apache.kafka.streams.state.KeyValueStore
 class DapengWindowAlertOnceProcessor[K, V](duration: Duration, keyWord: String,
                                            countTimesToWarn: Int, storeName: String,
                                            warningType: String,
-                                           userTag: String, subject: String)
+                                           userTag: String, subject: String,urlTag:String)
   extends ProcessorSupplier[K, V] with Logging {
 
   var kvStore: KeyValueStore[String, Long] = null;
@@ -41,7 +41,7 @@ class DapengWindowAlertOnceProcessor[K, V](duration: Duration, keyWord: String,
         val result = kvStore.get(keyWord)
         if (result == null) {
           //告警
-          sendWarning(warningType, userTag, subject, value.toString)
+          sendWarning(warningType, userTag, subject, value.toString,urlTag)
           kvStore.put(keyWord, 1)
         }
       }
