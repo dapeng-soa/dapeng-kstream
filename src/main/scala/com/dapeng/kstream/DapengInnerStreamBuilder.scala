@@ -8,13 +8,13 @@ import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 import org.apache.kafka.streams.kstream.Consumed
 import org.apache.kafka.streams.scala.{Serdes, StreamsBuilder}
 
-class DapengInnerStreamBuilder[K,V](consumed: Consumed[K,V]) {
+class DapengInnerStreamBuilder[K, V](consumed: Consumed[K, V]) {
 
   private val innerStreamBuilder = new StreamsBuilder()
   private var innerTopic: String = _
 
-  def topic(topic:String):DapengKStream[K,V] = {
-    innerTopic = topic
+  def topic(topic: String, consumer: String = UUID.randomUUID().toString): DapengKStream[K, V] = {
+    innerTopic = topic + "-" + consumer + "--"
     val kstream = innerStreamBuilder.stream[K, V](topic)(consumed)
     new DapengKStream[K, V](kstream)
   }
@@ -28,7 +28,7 @@ class DapengInnerStreamBuilder[K,V](consumed: Consumed[K,V]) {
   def start(server: String, offset: String) = {
     val props = {
       val p = new Properties()
-      p.put(StreamsConfig.APPLICATION_ID_CONFIG, s"$innerTopic-${UUID.randomUUID()}")
+      p.put(StreamsConfig.APPLICATION_ID_CONFIG, innerTopic)
       p.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, server)
       p.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, offset)
       p.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String.getClass.getName)

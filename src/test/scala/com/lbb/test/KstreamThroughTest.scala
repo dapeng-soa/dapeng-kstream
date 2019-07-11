@@ -45,7 +45,7 @@ object KstreamThroughTest {
           .sendMail("kstreamTest", "错误异常告警")
           //.sendDingding("kstreamTest", (k, v) => (k, v))*/
 
-    topic("dapeng-kstream-test")
+    topic("dapeng-kstream-test","consumer")
       .dapengFilter((_, v) => v.contains("::startup end") || v.contains(" ------------ SpringClassLoader:"))
 /*      .dapengMap((k,v) => {
         (k, s"错误异常，请注意: $v")
