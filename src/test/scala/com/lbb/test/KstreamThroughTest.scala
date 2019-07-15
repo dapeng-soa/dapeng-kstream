@@ -1,11 +1,12 @@
 package com.lbb.test
 
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.{Properties, UUID}
 
 import com.dapeng.kstream.DapengInnerStreamBuilder
 import org.apache.kafka.streams.scala.kstream.Consumed
-import org.apache.kafka.streams.scala.{Serdes}
+import org.apache.kafka.streams.scala.Serdes
 import org.apache.kafka.streams.kstream.internals.DapengKStreamEnhancer._
 
 object KstreamThroughTest {
@@ -45,17 +46,16 @@ object KstreamThroughTest {
           .sendMail("kstreamTest", "错误异常告警")
           //.sendDingding("kstreamTest", (k, v) => (k, v))*/
 
-    topic("dapeng-kstream-test","consumer")
-      .dapengFilter((_, v) => v.contains("::startup end") || v.contains(" ------------ SpringClassLoader:"))
-/*      .dapengMap((k,v) => {
-        (k, s"错误异常，请注意: $v")
-      })
-      .windowAlert(Duration.ofMinutes(1),"startup",1,"dingding","kstreamTest","启动告警")*/
-      .sendDingding("kstreamTest", (k,v: String) => {
-        val msg = s" 产生自定义日志告警，日志信息为: ${String.valueOf(v)}"
-        (k, msg)
-      },"BUSINESS")
-
+    topic("dapeng-kstream-test", "consumer")
+      .dapengFilter((_, v) => v.contains("连接关闭"))
+      /*      .dapengMap((k,v) => {
+              (k, s"错误异常，请注意: $v")
+            })
+            .windowAlert(Duration.ofMinutes(1),"startup",1,"dingding","kstreamTest","启动告警")*/
+      .sendDingding("kstreamTest", (k, v: String) => {
+      val msg = s" 产生自定义日志告警，日志信息为: ${String.valueOf(v)}"
+      (k, msg)
+    }, "BUSINESS")
 
 
     start("192.168.4.221:9092", "latest")

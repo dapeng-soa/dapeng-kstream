@@ -34,7 +34,7 @@ public class DispatcherDDUtils {
         }
     }
 
-    public static void sendLogHtmlToDD(Set<String> atPeoples, Map markDownMap,String urlTag) {
+    public static void sendLogHtmlToDD(Set<String> atPeoples, Map markDownMap, String urlTag) {
         if (PropertiesUtil.SEND_DD_TEST) {
             HttpUtils.doPostJson(PropertiesUtil.DD_TOKEN_TEST, buildHtmlMsgSendDDMap(atPeoples, markDownMap), "UTF-8");
         } else {
@@ -43,7 +43,7 @@ public class DispatcherDDUtils {
         }
     }
 
-    public static void sendMessageToDD(MailUser users, String tag, String text,String urlTag) {
+    public static void sendMessageToDD(MailUser users, String tag, String text, String urlTag) {
         Map map = new HashMap();
         StringBuffer buffer = new StringBuffer();
         String serviceTag = tag;
@@ -53,7 +53,7 @@ public class DispatcherDDUtils {
         if (matchPattern1.matches()) {
             sessionTid = matchPattern1.group(1);
             serviceTag = matchPattern1.group(2);
-        }else if (matchPattern2.matches()){
+        } else if (matchPattern2.matches()) {
             serviceTag = matchPattern2.group(1);
             sessionTid = matchPattern2.group(2);
         }
@@ -64,11 +64,11 @@ public class DispatcherDDUtils {
         buffer.append("\n").append("&#8194;&#8194;您负责的项目 [" + serviceTag + "] 产生如下自定义监控告警，请及时查看：").append("\n");
         buffer.append("\n").append(text).append("\n");
         map.put("text", buffer.append("\n\n").toString());
-        sendMessageToDD(users.getPhones(), map,urlTag);
+        sendMessageToDD(users.getPhones(), map, urlTag);
         if (!sessionTid.isEmpty()) {
             map.put("sessionTid", sessionTid);
             map.put("htmlTitle", "Dear: " + users.getUserName());
-            sendLogHtmlToDD(users.getPhones(), map,urlTag);
+            sendLogHtmlToDD(users.getPhones(), map, urlTag);
         }
     }
 
@@ -118,7 +118,6 @@ public class DispatcherDDUtils {
                 return PropertiesUtil.BUSINESS_URL;
         }
     }
-
 
     public static void main(String[] arg0) {
         //sendMessageToDDTest("test");
